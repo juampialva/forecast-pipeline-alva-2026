@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline & Forecast · Equipo Alva 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+:root {
+  --navy:#0D1B2A; --blue:#1B4F72; --teal:#117A65;
+  --alta:#1A9641; --media:#D4AC0D; --baja:#C0392B;
+  --white:#FFFFFF; --offW:#F8F9FA; --slate:#5D6D7E;
+  --light:#D5D8DC; --dark:#1A252F;
+  --shadow:0 2px 14px rgba(0,0,0,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--offW);color:var(--dark);}
+
+/* NAV */
+.nav{background:var(--navy);position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 20px;height:52px;border-bottom:3px solid var(--teal);}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#00D4C8;letter-spacing:.08em;margin-right:20px;white-space:nowrap;}
+.nav-tabs{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none;}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-tab{padding:6px 14px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-radius:6px 6px 0 0;white-space:nowrap;transition:all .2s;border-bottom:3px solid transparent;margin-bottom:-3px;}
+.nav-tab:hover{color:rgba(255,255,255,.85);}
+.nav-tab.active{color:#fff;background:rgba(0,212,200,.1);border-bottom-color:#00D4C8;}
+
+/* HERO */
+.hero{background:var(--navy);padding:48px 40px 40px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--teal);}
+.hero-badge{display:inline-block;background:var(--teal);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:16px;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,52px);font-weight:800;color:#fff;line-height:1.05;margin-bottom:8px;}
+.hero h1 span{color:#00D4C8;}
+.hero-sub{font-size:14px;color:rgba(160,196,216,.9);margin-bottom:32px;}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap;padding-top:20px;border-top:1px solid rgba(0,212,200,.25);}
+.hs-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:#00D4C8;}
+.hs-label{font-size:10px;color:rgba(160,196,216,.7);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
+
+/* PAGES */
+.page{display:none;animation:fadeIn .2s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION HEAD */
+.sec-head{display:flex;align-items:center;gap:14px;padding:22px 28px 14px;}
+.sec-bar{width:5px;height:38px;border-radius:3px;flex-shrink:0;}
+.sec-head h2{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;color:var(--navy);}
+.sec-head p{font-size:12px;color:var(--slate);margin-top:2px;}
+
+/* SCENARIO CARDS */
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;padding:0 28px 20px;}
+.sc-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.sc-card-head{padding:14px 18px 10px;}
+.sc-card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.sc-card-desc{font-size:11px;color:var(--slate);margin-top:3px;font-style:italic;}
+.sc-month{padding:10px 18px;border-top:1px solid #EEF0F2;}
+.sc-month:nth-child(even){background:#FAFBFC;}
+.sc-month-name{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.sc-month-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+.sc-bar-track{height:6px;background:#EEF0F2;border-radius:3px;overflow:hidden;margin-bottom:3px;}
+.sc-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.sc-pct{font-size:10px;display:flex;justify-content:space-between;}
+
+/* CHART CARDS */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 28px 20px;}
+@media(max-width:800px){.chart-row{grid-template-columns:1fr;}}
+.chart-card{background:#fff;border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+.chart-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.chart-wrap{position:relative;height:240px;}
+
+/* BRANDS TABLE */
+.brands-wrap{padding:0 28px 24px;overflow-x:auto;}
+.brands-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;}
+.brands-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+.brands-table th{background:var(--navy);color:#fff;font-weight:600;font-size:10px;padding:8px 10px;text-transform:uppercase;letter-spacing:.06em;}
+.brands-table td{padding:8px 10px;border-bottom:1px solid #EEF0F2;}
+.brands-table tr:nth-child(even) td{background:#FAFBFC;}
+.brands-table tr:hover td{background:#EEF5FB;}
+.prob-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-weight:700;font-size:9px;}
+.prob-alta{background:#D5F5E3;color:#1A9641;}
+.prob-media{background:#FEF9E7;color:#9A7D0A;}
+.prob-baja{background:#FDEDEC;color:#C0392B;}
+
+/* HUNTER CARDS */
+.hunter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;padding:0 28px 28px;}
+.h-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.h-card-head{display:flex;align-items:center;gap:12px;padding:14px 18px 10px;border-bottom:1px solid #EEF0F2;}
+.h-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;}
+.h-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--navy);}
+.h-sub{font-size:10px;color:var(--slate);margin-top:2px;}
+.h-bars{padding:10px 18px 14px;}
+.h-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.h-bar-label{font-size:10px;color:var(--slate);width:38px;flex-shrink:0;}
+.h-bar-track{flex:1;height:8px;background:#EEF0F2;border-radius:4px;overflow:hidden;}
+.h-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.h-bar-val{font-size:10px;font-weight:600;width:60px;text-align:right;flex-shrink:0;}
+
+/* PIPELINE DETAIL */
+.prob-section{margin:0 28px 20px;}
+.prob-header{padding:8px 14px;border-radius:8px 8px 0 0;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#fff;display:flex;justify-content:space-between;align-items:center;}
+.prob-table{width:100%;border-collapse:collapse;font-size:11px;}
+.prob-table th{padding:6px 10px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid #EEF0F2;color:var(--slate);}
+.prob-table td{padding:7px 10px;border-bottom:1px solid #EEF0F2;}
+.prob-table tr:hover td{background:#F7F9FB;}
+.comment{font-size:9px;color:#AAB7B8;font-style:italic;}
+
+footer{text-align:center;padding:20px;font-size:10px;color:var(--slate);border-top:1px solid #EEF0F2;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">MP · EQUIPO ALVA</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-page="resumen" onclick="show('resumen',this)">📊 Resumen</div>
+    <div class="nav-tab" data-page="forecast" onclick="show('forecast',this)">📈 Forecast</div>
+    <div class="nav-tab" data-page="hunters" onclick="show('hunters',this)">👥 Por Hunter</div>
+    <div class="nav-tab" data-page="pipeline" onclick="show('pipeline',this)">🗂 Pipeline</div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">MERCADO PAGO ARGENTINA · 2026</div>
+  <h1>Pipeline &amp; <span>Forecast</span></h1>
+  <p class="hero-sub">Equipo Juan Pablo Alva · Proyección Mayo → Agosto 2026</p>
+  <div class="hero-stats">
+    <div><div class="hs-val">$24.85 Mn</div><div class="hs-label">Real YTD Ene-Abr</div></div>
+    <div><div class="hs-val" id="hs-pipe">—</div><div class="hs-label">TPV Total Pipeline</div></div>
+    <div><div class="hs-val" id="hs-alta">—</div><div class="hs-label">Marcas ALTA</div></div>
+    <div><div class="hs-val" id="hs-total">—</div><div class="hs-label">Marcas en pipeline</div></div>
+  </div>
+</div>
+
+<div id="page-resumen" class="page active"></div>
+<div id="page-forecast" class="page"></div>
+<div id="page-hunters" class="page"></div>
+<div id="page-pipeline" class="page"></div>
+
+<footer>Mercado Pago Argentina · Equipo Big Sellers · Pipeline Mayo 2026</footer>
+
+<script>
+const MONTHS_F = ['Mayo','Junio','Julio','Agosto'];
+const MONTHS_K = ['mayo','jun','jul','ago'];
+
+const PLAN = { Mayo:8556363, Junio:10904634, Julio:13299871, Agosto:15743010 };
+
+const FORECAST = {
+  ALTA:     { Mayo:10493556, Junio:13903556, Julio:16593556, Agosto:16818556 },
+  ALTA_MED: { Mayo:10543556, Junio:16358556, Julio:25053556, Agosto:28228556 },
+  ALTA_MED_BAJA:{ Mayo:10543556, Junio:16358556, Julio:29933556, Agosto:33403556 },
+};
+
+const BRANDS = [
+  {prob:"ALTA",  marca:"Megatone",           hunter:"Agustín Mac",        mayo:500000,  jun:1500000, jul:2000000, ago:2000000, total:14000000, zona:"Santa Fe",   vertical:"Home",          comentario:"Sale después del Hot Sale"},
+  {prob:"ALTA",  marca:"Tyna",               hunter:"Agustín Mac",        mayo:400000,  jun:500000,  jul:500000,  ago:500000,  total:3900000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:"Encendida"},
+  {prob:"ALTA",  marca:"Super El Lapacho",   hunter:"Agustín Mac",        mayo:350000,  jun:400000,  jul:400000,  ago:400000,  total:3150000,  zona:"Corrientes", vertical:"Alimentos",     comentario:"Supermercado, ganada"},
+  {prob:"ALTA",  marca:"Bremen Motors",      hunter:"Delfina Sipes",      mayo:100000,  jun:200000,  jul:300000,  ago:500000,  total:3100000,  zona:"Otra",       vertical:"Autos",         comentario:"Por encender"},
+  {prob:"ALTA",  marca:"Pinturas misioneras",hunter:"Agustín Mac",        mayo:0,       jun:150000,  jul:600000,  ago:600000,  total:3750000,  zona:"Misiones",   vertical:"Construcción",  comentario:"Fábrica de pinturas"},
+  {prob:"ALTA",  marca:"Red Giro",           hunter:"Julieta Fassi",      mayo:100000,  jun:200000,  jul:300000,  ago:300000,  total:2100000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:""},
+  {prob:"ALTA",  marca:"Casino Neoparana",   hunter:"Agustín Mac",        mayo:0,       jun:200000,  jul:350000,  ago:350000,  total:2300000,  zona:"Entre Ríos", vertical:"Gambling",      comentario:"Sale en Junio"},
+  {prob:"ALTA",  marca:"Bistecca",           hunter:"Agustín Mac",        mayo:0,       jun:150000,  jul:300000,  ago:300000,  total:1950000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:"Carnicería Rosario"},
+  {prob:"ALTA",  marca:"Casino Victoria",    hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:600000,  ago:600000,  total:3600000,  zona:"Entre Ríos", vertical:"Gambling",      comentario:"Postergado a Jun/Jul"},
+  {prob:"ALTA",  marca:"Rafeeli Shop",       hunter:"Ornella Di Natale",  mayo:150000,  jun:200000,  jul:200000,  ago:200000,  total:1550000,  zona:"Otra",       vertical:"Salud",         comentario:""},
+  {prob:"ALTA",  marca:"Durabox",            hunter:"Camila Valansi",     mayo:50000,   jun:250000,  jul:250000,  ago:250000,  total:1800000,  zona:"Santa Fe",   vertical:"Autos",         comentario:"Propuesta enviada"},
+  {prob:"ALTA",  marca:"Cafe Registrado",    hunter:"Camila Valansi",     mayo:50000,   jun:200000,  jul:200000,  ago:200000,  total:1450000,  zona:"Otra",       vertical:"Alimentos",     comentario:"Encendido"},
+  {prob:"ALTA",  marca:"Panaderia Paracao",  hunter:"Delfina Sipes",      mayo:150000,  jun:200000,  jul:200000,  ago:200000,  total:1550000,  zona:"Entre Ríos", vertical:"Alimentos",     comentario:"Propuesta aceptada"},
+  {prob:"ALTA",  marca:"Riccollini",         hunter:"Julieta Fassi",      mayo:150000,  jun:200000,  jul:200000,  ago:200000,  total:1550000,  zona:"Otra",       vertical:"Alimentos",     comentario:""},
+  {prob:"ALTA",  marca:"Sofitel Cardales",   hunter:"Ornella Di Natale",  mayo:0,       jun:150000,  jul:300000,  ago:300000,  total:1950000,  zona:"Bs As",      vertical:"Turismo",       comentario:""},
+  {prob:"ALTA",  marca:"Aguas de corrientes",hunter:"Ornella Di Natale",  mayo:0,       jun:100000,  jul:300000,  ago:300000,  total:1900000,  zona:"Corrientes", vertical:"Utilities",     comentario:""},
+  {prob:"ALTA",  marca:"Hoteles Solans",     hunter:"Ornella Di Natale",  mayo:0,       jun:150000,  jul:200000,  ago:200000,  total:1350000,  zona:"Santa Fe",   vertical:"Turismo",       comentario:""},
+  {prob:"ALTA",  marca:"Supertim",           hunter:"Julieta Fassi",      mayo:50000,   jun:200000,  jul:200000,  ago:200000,  total:1450000,  zona:"Entre Ríos", vertical:"Alimentos",     comentario:""},
+  {prob:"ALTA",  marca:"Gio Farma",          hunter:"Juan I. Sottile",    mayo:125000,  jun:150000,  jul:200000,  ago:200000,  total:1475000,  zona:"Misiones",   vertical:"Salud",         comentario:"Encendida"},
+  {prob:"ALTA",  marca:"Bartolito Mayorista",hunter:"Juan I. Sottile",    mayo:125000,  jun:150000,  jul:150000,  ago:150000,  total:1175000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:"Propuesta enviada"},
+  {prob:"ALTA",  marca:"Compañia Nativa",    hunter:"Delfina Sipes",      mayo:0,       jun:100000,  jul:125000,  ago:125000,  total:850000,   zona:"Bs As",      vertical:"Home",          comentario:"Campaña post hot sale"},
+  {prob:"ALTA",  marca:"Perfumeria Oliveras",hunter:"Delfina Sipes",      mayo:0,       jun:60000,   jul:100000,  ago:125000,  total:785000,   zona:"Santa Fe",   vertical:"Salud",         comentario:"Ver tema tag"},
+  {prob:"ALTA",  marca:"Volpato Centro",     hunter:"Ornella Di Natale",  mayo:50000,   jun:150000,  jul:150000,  ago:150000,  total:1100000,  zona:"Santa Fe",   vertical:"Electro",       comentario:""},
+  {prob:"ALTA",  marca:"NESKA indumentaria", hunter:"Ornella Di Natale",  mayo:50000,   jun:150000,  jul:150000,  ago:150000,  total:1100000,  zona:"Santa Fe",   vertical:"Apparel",       comentario:""},
+  {prob:"ALTA",  marca:"Caja psicologos pba",hunter:"Delfina Sipes",      mayo:50000,   jun:100000,  jul:150000,  ago:150000,  total:1050000,  zona:"Bs As",      vertical:"Salud",         comentario:"Points enviados"},
+  {prob:"ALTA",  marca:"La Mara entret.",    hunter:"Delfina Sipes",      mayo:125000,  jun:125000,  jul:200000,  ago:200000,  total:1150000,  zona:"Otra",       vertical:"Entretenimiento",comentario:"Encendida"},
+  {prob:"MEDIA", marca:"SAMSA",              hunter:"Agustín Mac",        mayo:0,       jun:200000,  jul:800000,  ago:800000,  total:5000000,  zona:"Misiones",   vertical:"Utilities",     comentario:"Integración QR Junio"},
+  {prob:"MEDIA", marca:"Showsport",          hunter:"Ornella Di Natale",  mayo:0,       jun:0,       jul:300000,  ago:1000000, total:7300000,  zona:"Corrientes", vertical:"Apparel",       comentario:""},
+  {prob:"MEDIA", marca:"El chañar",          hunter:"Agustín Mac",        mayo:0,       jun:200000,  jul:500000,  ago:500000,  total:3200000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:"Carnicerías Rosario"},
+  {prob:"MEDIA", marca:"Grupo lorenzo",      hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:600000,  ago:600000,  total:3600000,  zona:"Misiones",   vertical:"Electro",       comentario:"Contrato Payway 2028"},
+  {prob:"MEDIA", marca:"Farmacia Embon",     hunter:"Agustín Mac",        mayo:0,       jun:300000,  jul:400000,  ago:400000,  total:2700000,  zona:"Santa Fe",   vertical:"Salud",         comentario:"Varios CUITs"},
+  {prob:"MEDIA", marca:"Paladar",            hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:500000,  ago:500000,  total:3000000,  zona:"Santa Fe",   vertical:"Alimentos",     comentario:"Avanzando propuesta"},
+  {prob:"MEDIA", marca:"Sensei",             hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:500000,  ago:500000,  total:3000000,  zona:"Entre Ríos", vertical:"Home",          comentario:"Interesado"},
+  {prob:"MEDIA", marca:"Farmacia Miguel L.", hunter:"Agustín Mac",        mayo:0,       jun:200000,  jul:400000,  ago:400000,  total:2600000,  zona:"Misiones",   vertical:"Salud",         comentario:"Muy cerca de cerrar"},
+  {prob:"MEDIA", marca:"Grupo Hermanos",     hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:0,       ago:500000,  total:2500000,  zona:"Misiones",   vertical:"Alimentos",     comentario:"Gastronomía Iguazú"},
+  {prob:"BAJA",  marca:"BYD",               hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:900000,  ago:900000,  total:5400000,  zona:"Otra",       vertical:"Autos",         comentario:"40 locales"},
+  {prob:"BAJA",  marca:"Pandora",           hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:0,       ago:0,       total:6000000,  zona:"Otra",       vertical:"Otros",         comentario:"Activación Oct"},
+  {prob:"BAJA",  marca:"Red Sport",         hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:600000,  ago:600000,  total:3600000,  zona:"Santa Fe",   vertical:"Apparel",       comentario:"12 locales"},
+  {prob:"BAJA",  marca:"Bruno Hermanos",    hunter:"Agustín Mac",        mayo:0,       jun:0,       jul:600000,  ago:600000,  total:3600000,  zona:"Misiones",   vertical:"Alimentos",     comentario:""},
+  {prob:"BAJA",  marca:"Farmacia Lacarra",  hunter:"Delfina Sipes",      mayo:0,       jun:0,       jul:300000,  ago:300000,  total:2500000,  zona:"Otra",       vertical:"Salud",         comentario:"11 locales"},
+  {prob:"BAJA",  marca:"Heladerias Bahillo",hunter:"Delfina Sipes",      mayo:0,       jun:0,       jul:100000,  ago:100000,  total:1225000,  zona:"Entre Ríos", vertical:"Alimentos",     comentario:""},
+  {prob:"BAJA",  marca:"Bourlot",           hunter:"Delfina Sipes",      mayo:0,       jun:0,       jul:100000,  ago:100000,  total:1000000,  zona:"Santa Fe",   vertical:"Home",          comentario:""},
+];
+
+const HUNTERS = {
+  "Agustín Mac":       {color:"#1A9641", mayo:2525000, jun:6950000,  jul:12250000, ago:12950000},
+  "Ornella Di Natale": {color:"#2471A3", mayo:300000,  jun:1850000,  jul:3700000,  ago:4450000},
+  "Delfina Sipes":     {color:"#CA6F1E", mayo:425000,  jun:785000,   jul:2475000,  ago:2600000},
+  "Julieta Fassi":     {color:"#1A9641", mayo:300000,  jun:600000,   jul:700000,   ago:700000},
+  "Camila Valansi":    {color:"#8E44AD", mayo:200000,  jun:850000,   jul:1070000,  ago:1120000},
+  "Juan I. Sottile":   {color:"#C0392B", mayo:250000,  jun:905000,   jul:1765000,  ago:2305000},
+};
+
+// ── HELPERS ──
+const fmt = n => n>=1e6 ? `$${(n/1e6).toFixed(2)} Mn` : n>=1e3 ? `$${(n/1e3).toFixed(0)} K` : `$${n}`;
+const pc  = (v,p) => p>0 ? Math.round(v/p*100) : 0;
+const pcol= v => v>=100?'var(--alta)':v>=80?'var(--media)':'var(--baja)';
+const probCls = p => p==='ALTA'?'prob-alta':p==='MEDIA'?'prob-media':'prob-baja';
+const charts = {};
+const kill = id => { if(charts[id]){charts[id].destroy();delete charts[id];} };
+
+// ── HERO STATS ──
+const totalPipe = BRANDS.reduce((a,b)=>a+b.total,0);
+const altaCount = [...new Set(BRANDS.filter(b=>b.prob==='ALTA').map(b=>b.marca))].length;
+document.getElementById('hs-pipe').textContent = fmt(totalPipe);
+document.getElementById('hs-alta').textContent = altaCount;
+document.getElementById('hs-total').textContent = [...new Set(BRANDS.map(b=>b.marca))].size;
+
+// ══════════════════════════
+// RESUMEN PAGE
+// ══════════════════════════
+function buildResumen() {
+  const scenarios = [
+    {label:'Solo ALTA',         color:'var(--alta)',  desc:'Marcas con alta probabilidad de cierre', data:FORECAST.ALTA},
+    {label:'ALTA + MEDIA',      color:'var(--media)', desc:'Escenario base realista',                data:FORECAST.ALTA_MED},
+    {label:'ALTA + MEDIA + BAJA',color:'var(--baja)', desc:'Máximo potencial del pipeline',         data:FORECAST.ALTA_MED_BAJA},
+  ];
+
+  let html = `<div class="sec-head">
+    <div class="sec-bar" style="background:var(--teal)"></div>
+    <div><h2>Forecast Total · Mayo – Agosto 2026</h2><p>3 escenarios vs Plan Anual</p></div>
+  </div>
+  <div class="scenario-grid">
+    ${scenarios.map(sc=>`
+      <div class="sc-card">
+        <div class="sc-card-head" style="border-top:4px solid ${sc.color}">
+          <div class="sc-card-title" style="color:${sc.color}">${sc.label}</div>
+          <div class="sc-card-desc">${sc.desc}</div>
+        </div>
+        ${MONTHS_F.map(m=>{
+          const v = sc.data[m], p = PLAN[m], pv = pc(v,p);
+          const fc = pv>=100?'#1A9641':pv>=80?'#9A7D0A':'#C0392B';
+          const fw = Math.min(pv/100,1.5)*100;
+          return `<div class="sc-month">
+            <div class="sc-month-name">${m}</div>
+            <div class="sc-month-val" style="color:${sc.color}">${fmt(v)}</div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${Math.min(fw,100)}%;background:${sc.color}"></div></div>
+            <div class="sc-pct"><span style="color:${fc};font-weight:700">${pv}% del plan</span><span style="color:var(--slate)">Plan: ${fmt(p)}</span></div>
+          </div>`;
+        }).join('')}
+      </div>`).join('')}
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">📊 Forecast Acumulado vs Plan Anual (Mn USD)</div>
+      <div class="chart-wrap"><canvas id="c-main"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📈 % Cumplimiento vs Plan por Escenario</div>
+      <div class="chart-wrap"><canvas id="c-pct"></canvas></div>
+    </div>
+  </div>`;
+
+  document.getElementById('page-resumen').innerHTML = html;
+
+  setTimeout(()=>{
+    const baseOpts = {responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F2'},ticks:{font:{size:10}}}}};
+
+    kill('c-main');
+    charts['c-main'] = new Chart(document.getElementById('c-main'),{
+      type:'bar',
+      data:{labels:MONTHS_F,datasets:[
+        {label:'Solo ALTA',    data:MONTHS_F.map(m=>(FORECAST.ALTA[m]/1e6).toFixed(2)),     backgroundColor:'#1A964166',borderColor:'#1A9641',borderWidth:1,borderRadius:3},
+        {label:'+MEDIA',       data:MONTHS_F.map(m=>(FORECAST.ALTA_MED[m]/1e6).toFixed(2)), backgroundColor:'#D4AC0D66',borderColor:'#D4AC0D',borderWidth:1,borderRadius:3},
+        {label:'+BAJA',        data:MONTHS_F.map(m=>(FORECAST.ALTA_MED_BAJA[m]/1e6).toFixed(2)),backgroundColor:'#C0392B66',borderColor:'#C0392B',borderWidth:1,borderRadius:3},
+        {label:'Plan Anual',   data:MONTHS_F.map(m=>(PLAN[m]/1e6).toFixed(2)),              type:'line',borderColor:'#2471A3',borderWidth:2.5,pointBackgroundColor:'#2471A3',fill:false,tension:.3},
+      ]},options:{...baseOpts,scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F2'},ticks:{font:{size:10},callback:v=>`${v} Mn`}}}}
+    });
+
+    kill('c-pct');
+    charts['c-pct'] = new Chart(document.getElementById('c-pct'),{
+      type:'line',
+      data:{labels:MONTHS_F,datasets:[
+        {label:'Solo ALTA',data:MONTHS_F.map(m=>pc(FORECAST.ALTA[m],PLAN[m])),borderColor:'#1A9641',borderWidth:2,pointBackgroundColor:'#1A9641',fill:false,tension:.3},
+        {label:'+MEDIA',   data:MONTHS_F.map(m=>pc(FORECAST.ALTA_MED[m],PLAN[m])),borderColor:'#D4AC0D',borderWidth:2,pointBackgroundColor:'#D4AC0D',fill:false,tension:.3},
+        {label:'+BAJA',    data:MONTHS_F.map(m=>pc(FORECAST.ALTA_MED_BAJA[m],PLAN[m])),borderColor:'#C0392B',borderWidth:2,pointBackgroundColor:'#C0392B',fill:false,tension:.3},
+      ]},
+      options:{...baseOpts,
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F2'},ticks:{font:{size:10},callback:v=>`${v}%`}}},
+        plugins:{...baseOpts.plugins,
+          annotation:{annotations:{line100:{type:'line',yMin:100,yMax:100,borderColor:'rgba(0,0,0,.2)',borderWidth:1,borderDash:[5,3]}}}
+        }
+      }
+    });
+  },30);
+}
+
+// ══════════════════════════
+// FORECAST PAGE (top brands)
+// ══════════════════════════
+function buildForecast() {
+  const scored = BRANDS.map(b=>({...b,score:b.mayo+b.jun+b.jul+b.ago}));
+  const deduped = [];
+  const seen = new Set();
+  for(const b of scored.sort((a,c)=>c.score-a.score)){
+    if(!seen.has(b.marca)){deduped.push(b);seen.add(b.marca);}
+  }
+
+  const html = `<div class="sec-head">
+    <div class="sec-bar" style="background:#2471A3"></div>
+    <div><h2>Top Marcas del Pipeline</h2><p>Ordenadas por TPV Mayo–Agosto · todas las probabilidades</p></div>
+  </div>
+  <div class="brands-wrap">
+    <table class="brands-table">
+      <thead><tr>
+        <th>Prob.</th><th>Marca</th><th>Hunter</th><th>Zona</th><th>Vertical</th>
+        <th style="text-align:center">Mayo</th><th style="text-align:center">Junio</th>
+        <th style="text-align:center">Julio</th><th style="text-align:center">Agosto</th>
+        <th style="text-align:center">Total Anual</th>
+      </tr></thead>
+      <tbody>
+        ${deduped.map(b=>`<tr>
+          <td><span class="prob-badge ${probCls(b.prob)}">${b.prob}</span></td>
+          <td><strong>${b.marca}</strong></td>
+          <td style="color:var(--slate)">${b.hunter}</td>
+          <td style="color:var(--slate);font-size:10px">${b.zona}</td>
+          <td style="font-size:10px;color:var(--slate)">${b.vertical}</td>
+          ${[b.mayo,b.jun,b.jul,b.ago].map(v=>`<td style="text-align:center;color:${v>0?'var(--dark)':'var(--light)'}${v>=1e6?';font-weight:700':''}">${v>0?fmt(v):'—'}</td>`).join('')}
+          <td style="text-align:center;font-weight:700;color:${b.prob==='ALTA'?'var(--alta)':b.prob==='MEDIA'?'var(--media)':'var(--baja)'}">${fmt(b.total)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  document.getElementById('page-forecast').innerHTML = html;
+}
+
+// ══════════════════════════
+// HUNTERS PAGE
+// ══════════════════════════
+function buildHunters() {
+  const entries = Object.entries(HUNTERS);
+
+  const html = `<div class="sec-head">
+    <div class="sec-bar" style="background:#8E44AD"></div>
+    <div><h2>Forecast por Hunter</h2><p>Pipeline Mayo – Agosto 2026 · todas las probabilidades</p></div>
+  </div>
+  <div class="hunter-grid">
+    ${entries.map(([name,d],i)=>{
+      const total = d.mayo+d.jun+d.jul+d.ago;
+      const maxV  = Math.max(d.mayo,d.jun,d.jul,d.ago,1);
+      const init  = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const brandCount = [...new Set(BRANDS.filter(b=>b.hunter===name||b.hunter.startsWith(name.split(' ')[0])).map(b=>b.marca))].length;
+      return `<div class="h-card" style="border-top:4px solid ${d.color}">
+        <div class="h-card-head">
+          <div class="h-avatar" style="background:${d.color}">${init}</div>
+          <div>
+            <div class="h-name">${name}</div>
+            <div class="h-sub">Pipeline May-Ago: ${fmt(total)} · ${brandCount} marcas</div>
+          </div>
+        </div>
+        <div class="h-bars">
+          ${MONTHS_F.map((m,mi)=>{
+            const mv = d[MONTHS_K[mi]]||0;
+            const fw = mv>0?Math.max(mv/maxV*100,2):0;
+            return `<div class="h-bar-row">
+              <div class="h-bar-label">${m.slice(0,3)}</div>
+              <div class="h-bar-track"><div class="h-bar-fill" style="width:${fw}%;background:${d.color}"></div></div>
+              <div class="h-bar-val" style="color:${mv>0?d.color:'var(--light)'}">${mv>0?fmt(mv):'—'}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">📊 Pipeline Total por Hunter (May-Ago)</div>
+      <div class="chart-wrap"><canvas id="c-hunter-bar"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🥧 Distribución del Pipeline por Hunter</div>
+      <div class="chart-wrap"><canvas id="c-hunter-pie"></canvas></div>
+    </div>
+  </div>`;
+
+  document.getElementById('page-hunters').innerHTML = html;
+
+  setTimeout(()=>{
+    const names = Object.keys(HUNTERS);
+    const totals = names.map(n=>((HUNTERS[n].mayo+HUNTERS[n].jun+HUNTERS[n].jul+HUNTERS[n].ago)/1e6).toFixed(2));
+    const colors = names.map(n=>HUNTERS[n].color);
+
+    kill('c-hunter-bar');
+    charts['c-hunter-bar'] = new Chart(document.getElementById('c-hunter-bar'),{
+      type:'bar',
+      data:{labels:names.map(n=>n.split(' ')[0]),datasets:[{
+        label:'TPV May-Ago (Mn)',data:totals,
+        backgroundColor:colors.map(c=>c+'99'),borderColor:colors,borderWidth:1.5,borderRadius:4
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#EEF0F2'},ticks:{font:{size:10},callback:v=>`${v} Mn`}}}}
+    });
+
+    kill('c-hunter-pie');
+    charts['c-hunter-pie'] = new Chart(document.getElementById('c-hunter-pie'),{
+      type:'doughnut',
+      data:{labels:names.map(n=>n.split(' ')[0]),datasets:[{data:totals,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}
+    });
+  },30);
+}
+
+// ══════════════════════════
+// PIPELINE DETAIL PAGE
+// ══════════════════════════
+function buildPipeline() {
+  const groups = ['ALTA','MEDIA','BAJA'];
+  const gcols  = {'ALTA':'#0A3622','MEDIA':'#7D6608','BAJA':'#7B241C'};
+  const gbg    = {'ALTA':'#D5F5E3','MEDIA':'#FEF9E7','BAJA':'#FDEDEC'};
+  const gfc    = {'ALTA':'#1A9641','MEDIA':'#9A7D0A','BAJA':'#C0392B'};
+
+  let html = `<div class="sec-head">
+    <div class="sec-bar" style="background:#0D1B2A"></div>
+    <div><h2>Pipeline Completo por Probabilidad</h2><p>Detalle de todas las marcas · Mayo – Agosto 2026</p></div>
+  </div>`;
+
+  groups.forEach(prob=>{
+    const grpBrands = BRANDS.filter(b=>b.prob===prob);
+    const deduped = [];
+    const seen = new Set();
+    for(const b of grpBrands){if(!seen.has(b.marca)){deduped.push(b);seen.add(b.marca);}}
+    const grpTotal = deduped.reduce((a,b)=>a+b.mayo+b.jun+b.jul+b.ago,0);
+
+    html += `<div class="prob-section">
+      <div class="prob-header" style="background:${gcols[prob]}">
+        <span>${prob}  ·  ${deduped.length} marcas</span>
+        <span>TPV May-Ago: ${fmt(grpTotal)}</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="prob-table" style="background:#fff;border:1px solid #EEF0F2;border-top:none">
+        <thead><tr style="background:${gbg[prob]}">
+          <th style="text-align:left">Marca</th><th style="text-align:left">Hunter</th>
+          <th style="text-align:left">Zona</th><th style="text-align:left">Vertical</th>
+          <th style="text-align:center">Mayo</th><th style="text-align:center">Jun</th>
+          <th style="text-align:center">Jul</th><th style="text-align:center">Ago</th>
+          <th style="text-align:center">Total Anual</th>
+          <th style="text-align:left">Comentario</th>
+        </tr></thead>
+        <tbody>
+          ${deduped.map(b=>`<tr>
+            <td><strong>${b.marca}</strong></td>
+            <td style="color:var(--slate)">${b.hunter}</td>
+            <td style="font-size:10px;color:var(--slate)">${b.zona}</td>
+            <td style="font-size:10px;color:var(--slate)">${b.vertical}</td>
+            ${[b.mayo,b.jun,b.jul,b.ago].map(v=>`<td style="text-align:center;color:${v>0?gfc[prob]:'var(--light)'}">${v>0?fmt(v):'—'}</td>`).join('')}
+            <td style="text-align:center;font-weight:700;color:${gfc[prob]}">${fmt(b.total)}</td>
+            <td class="comment">${b.comentario||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('page-pipeline').innerHTML = html;
+}
+
+// ── ROUTING ──
+const built = {};
+function show(key,tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+key).classList.add('active');
+  if(tab) tab.classList.add('active');
+  if(!built[key]){
+    if(key==='resumen') buildResumen();
+    else if(key==='forecast') buildForecast();
+    else if(key==='hunters') buildHunters();
+    else if(key==='pipeline') buildPipeline();
+    built[key]=true;
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  show('resumen', document.querySelector('[data-page="resumen"]'));
+});
+</script>
+</body>
+</html>
